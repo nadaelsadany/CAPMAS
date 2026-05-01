@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AdministrationService, ExternalEntity, Administration } from '../../../core/services/administration.service';
@@ -154,6 +154,7 @@ import { AdministrationService, ExternalEntity, Administration } from '../../../
 export class ExternalEntitiesManagementComponent implements OnInit, OnDestroy {
   private adminService = inject(AdministrationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private sub = new Subscription();
 
   entities: ExternalEntity[] = [];
@@ -172,6 +173,14 @@ export class ExternalEntitiesManagementComponent implements OnInit, OnDestroy {
     );
     this.sub.add(
       this.adminService.administrations$.subscribe(data => this.administrations = data)
+    );
+
+    this.sub.add(
+      this.route.queryParams.subscribe(params => {
+        if (params['create']) {
+          this.openCreateModal();
+        }
+      })
     );
   }
 

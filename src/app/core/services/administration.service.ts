@@ -25,6 +25,18 @@ export interface Reviewer {
   lastActivity: string;
 }
 
+export interface SystemUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'EXTERNAL_ENTITY_ADMIN' | 'ADMINISTRATION_REVIEWER';
+  assignedAdminIds?: string[]; // Multiple for ADMINISTRATION_ADMIN or ADMINISTRATION_REVIEWER
+  assignedEntityId?: string;   // Single for EXTERNAL_ENTITY_ADMIN
+  joinDate: string;
+  status: 'active' | 'suspended';
+  password?: string;
+}
+
 export interface Report {
   id: string;
   name: string;
@@ -79,10 +91,12 @@ export class AdministrationService {
   private administrationsSubject = new BehaviorSubject<Administration[]>([]);
   private entitiesSubject = new BehaviorSubject<ExternalEntity[]>([]);
   private reportsSubject = new BehaviorSubject<Report[]>([]);
+  private usersSubject = new BehaviorSubject<SystemUser[]>([]);
 
   administrations$ = this.administrationsSubject.asObservable();
   entities$ = this.entitiesSubject.asObservable();
   reports$ = this.reportsSubject.asObservable();
+  users$ = this.usersSubject.asObservable();
 
   constructor() {
     this.loadFromStorage();
@@ -92,14 +106,16 @@ export class AdministrationService {
     try {
       const storedData = localStorage.getItem(this.STORAGE_KEY);
       if (storedData) {
-        const { administrations, entities, reports } = JSON.parse(storedData);
+        const { administrations, entities, reports, users } = JSON.parse(storedData);
         this.administrationsSubject.next(administrations || this.initialAdministrations);
         this.entitiesSubject.next(entities || this.initialEntities);
         this.reportsSubject.next(reports || this.initialReports);
+        this.usersSubject.next(users || this.getInitialUsers());
       } else {
         this.administrationsSubject.next(this.initialAdministrations);
         this.entitiesSubject.next(this.initialEntities);
         this.reportsSubject.next(this.initialReports);
+        this.usersSubject.next(this.getInitialUsers());
         this.saveToStorage();
       }
     } catch (e) {
@@ -113,12 +129,21 @@ export class AdministrationService {
       const data = {
         administrations: this.administrationsSubject.value,
         entities: this.entitiesSubject.value,
-        reports: this.reportsSubject.value
+        reports: this.reportsSubject.value,
+        users: this.usersSubject.value
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
+  }
+
+  private getInitialUsers(): SystemUser[] {
+    return [
+      { id: '1', name: 'أحمد محمود', email: 'admin@capmas.gov.eg', role: 'SUPER_ADMIN', joinDate: '2024/10/26', status: 'active' },
+      { id: '2', name: 'سارة علي', email: 's.ali@capmas.gov.eg', role: 'ADMINISTRATION_ADMIN', assignedAdminIds: ['it-dept'], joinDate: '2024/10/26', status: 'active' },
+      { id: '3', name: 'خالد حسن', email: 'k.hassan@customs.gov.eg', role: 'EXTERNAL_ENTITY_ADMIN', assignedEntityId: 'customs', joinDate: '2024/10/26', status: 'suspended' }
+    ];
   }
 
   getAdministrations() {
@@ -227,6 +252,16 @@ export class AdministrationService {
     }
   }
 
+  unlinkEntity(adminId: string, entityId: string) {
+    const admins = this.administrationsSubject.value;
+    const index = admins.findIndex(a => a.id === adminId);
+    if (index > -1) {
+      admins[index].linkedEntityIds = admins[index].linkedEntityIds.filter(id => id !== entityId);
+      this.administrationsSubject.next([...admins]);
+      this.saveToStorage();
+    }
+  }
+
   // Report Methods
   getReportsByEntity(entityId: string) {
     return this.reportsSubject.value.filter(r => r.entityId === entityId);
@@ -257,6 +292,40 @@ export class AdministrationService {
   deleteReport(id: string) {
     const current = this.reportsSubject.value;
     this.reportsSubject.next(current.filter(r => r.id !== id));
+    this.saveToStorage();
+  }
+
+  // User Methods
+  getUsers() {
+    return this.usersSubject.value;
+  }
+
+  createUser(user: Omit<SystemUser, 'id' | 'joinDate' | 'status'>) {
+    const newUser: SystemUser = {
+      ...user,
+      id: 'user-' + Math.random().toString(36).substr(2, 9),
+      joinDate: new Date().toLocaleDateString('ar-EG'),
+      status: 'active'
+    };
+    const current = this.usersSubject.value;
+    this.usersSubject.next([...current, newUser]);
+    this.saveToStorage();
+    return newUser;
+  }
+
+  updateUser(id: string, data: Partial<SystemUser>) {
+    const current = this.usersSubject.value;
+    const index = current.findIndex(u => u.id === id);
+    if (index > -1) {
+      current[index] = { ...current[index], ...data };
+      this.usersSubject.next([...current]);
+      this.saveToStorage();
+    }
+  }
+
+  deleteUser(id: string) {
+    const current = this.usersSubject.value;
+    this.usersSubject.next(current.filter(u => u.id !== id));
     this.saveToStorage();
   }
 }

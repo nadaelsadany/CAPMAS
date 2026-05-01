@@ -31,6 +31,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/external-entities-management.component').then(m => m.ExternalEntitiesManagementComponent)
   },
   {
+    path: 'external-entities/:entityId',
+    loadComponent: () => import('./pages/external-entity-details.component').then(m => m.ExternalEntityDetailsComponent)
+  },
+  {
+    path: 'external-entities/:entityId/reports/:reportId/config',
+    loadComponent: () => import('../administration-admin/pages/report-builder.component').then(m => m.ReportBuilderComponent)
+  },
+  {
     path: 'audit-log',
     loadComponent: () => import('./pages/audit-log.component').then(m => m.AuditLogComponent)
   }

@@ -19,13 +19,26 @@ export const routes: Routes = [
       },
       {
         path: 'administration-admin',
-        canActivate: [roleGuard(['ADMINISTRATION_ADMIN'])],
+        canActivate: [roleGuard(['ADMINISTRATION_ADMIN', 'ADMINISTRATION_REVIEWER'])],
         loadChildren: () => import('./features/administration-admin/administration-admin.routes').then(m => m.routes)
       },
       {
         path: 'external-entity-admin',
         canActivate: [roleGuard(['EXTERNAL_ENTITY_ADMIN'])],
         loadChildren: () => import('./features/external-entity-admin/external-entity-admin.routes').then(m => m.routes)
+      },
+      {
+        path: 'settings',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/settings/pages/settings-layout.component').then(m => m.SettingsLayoutComponent)
+          },
+          {
+            path: 'all-notifications',
+            loadComponent: () => import('./features/settings/pages/notifications-page.component').then(m => m.NotificationsPageComponent)
+          }
+        ]
       }
     ]
   },

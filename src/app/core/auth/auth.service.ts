@@ -1,13 +1,15 @@
 import { Injectable, signal } from '@angular/core';
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'EXTERNAL_ENTITY_ADMIN';
+export type UserRole = 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'ADMINISTRATION_REVIEWER' | 'EXTERNAL_ENTITY_ADMIN';
 
 export interface User {
   id: string;
   name: string;
+  email: string;
   role: UserRole;
   sectorId?: string;
   institutionId?: string;
+  administrationIds?: string[]; // Multiple administrations for admin/reviewer roles
 }
 
 @Injectable({
@@ -18,8 +20,11 @@ export class AuthService {
   currentUser = signal<User | null>({
     id: '1',
     name: 'Admin User',
-    role: 'SUPER_ADMIN' // Default mock to SUPER_ADMIN
+    email: 'admin@capmas.gov.eg',
+    role: 'SUPER_ADMIN'
   });
+
+  activeAdministrationId = signal<string | null>(null);
 
   isAuthenticated(): boolean {
     return this.currentUser() !== null;
@@ -35,7 +40,9 @@ export class AuthService {
     this.currentUser.set({
       id: 'test',
       name: `Test ${role}`,
-      role: role
+      email: `${role.toLowerCase()}@capmas.gov.eg`,
+      role: role,
+      administrationIds: role === 'ADMINISTRATION_ADMIN' || role === 'ADMINISTRATION_REVIEWER' ? ['it-dept', 'stats-dept'] : []
     });
   }
 }

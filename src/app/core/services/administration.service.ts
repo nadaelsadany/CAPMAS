@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
+import { NotificationService } from './notification.service';
 
 export interface Administration {
   id: string;
@@ -56,6 +57,7 @@ export interface Report {
   providedIn: 'root'
 })
 export class AdministrationService {
+  private noteService = inject(NotificationService);
 
   private STORAGE_KEY = 'capmas_admin_data';
 
@@ -146,6 +148,10 @@ export class AdministrationService {
     ];
   }
 
+  getAdministrationsSync(): Administration[] {
+    return this.administrationsSubject.value;
+  }
+
   getAdministrations() {
     return this.administrationsSubject.value;
   }
@@ -180,6 +186,10 @@ export class AdministrationService {
     const current = this.administrationsSubject.value;
     this.administrationsSubject.next(current.filter(a => a.id !== id));
     this.saveToStorage();
+  }
+
+  getExternalEntitiesSync(): ExternalEntity[] {
+    return this.entitiesSubject.value;
   }
 
   getEntities() {
@@ -249,6 +259,16 @@ export class AdministrationService {
       admins[index].linkedEntityIds = [...new Set([...admins[index].linkedEntityIds, ...entityIds])];
       this.administrationsSubject.next([...admins]);
       this.saveToStorage();
+
+      // Trigger Notification
+      this.noteService.addNotification({
+        userId: '1', // Super Admin
+        type: 'entity_linked',
+        category: 'config',
+        title: 'تم ربط جهات جديدة',
+        message: `تم ربط ${entityIds.length} جهة/جهات بالإدارة: ${admins[index].name}`,
+        priority: 'medium'
+      });
     }
   }
 
@@ -287,6 +307,17 @@ export class AdministrationService {
     
     this.reportsSubject.next([...current]);
     this.saveToStorage();
+
+    // Trigger Notification
+    this.noteService.addNotification({
+      userId: '1', // Super Admin or Administration Admin
+      type: 'report_submitted',
+      category: 'report',
+      title: 'تم حفظ/تحديث تقرير',
+      message: `تم إجراء تغييرات على تقرير: ${report.name}`,
+      priority: 'medium',
+      link: `/super-admin/administrations/${report.adminId}`
+    });
   }
 
   deleteReport(id: string) {
@@ -310,6 +341,17 @@ export class AdministrationService {
     const current = this.usersSubject.value;
     this.usersSubject.next([...current, newUser]);
     this.saveToStorage();
+
+    // Trigger Notification for the new user
+    this.noteService.addNotification({
+      userId: newUser.id,
+      type: 'account_created',
+      category: 'account',
+      title: 'تم إنشاء حسابك بنجاح',
+      message: `مرحباً ${newUser.name}، تم تفعيل حسابك بصلاحيات ${newUser.role}.`,
+      priority: 'high'
+    });
+
     return newUser;
   }
 

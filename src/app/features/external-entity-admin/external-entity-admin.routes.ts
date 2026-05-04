@@ -1,9 +1,16 @@
 import { Routes } from '@angular/router';
-import { ExternalEntityAdminComponent } from './external-entity-admin.component';
 
 export const routes: Routes = [
   {
     path: '',
-    component: ExternalEntityAdminComponent
+    loadComponent: () => import('./pages/dashboard.component').then(m => m.EntityDashboardComponent)
+  },
+  {
+    path: 'portal/:adminId',
+    loadComponent: () => import('./pages/portal.component').then(m => m.EntityPortalComponent)
+  },
+  {
+    path: 'submit/:reportId',
+    loadComponent: () => import('./pages/data-entry.component').then(m => m.EntityDataEntryComponent)
   }
 ];

@@ -48,14 +48,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () => import('@angular/core').then(m => {
-          @m.Component({
-            standalone: true,
-            template: '<div class="p-10 text-center"><h1 class="text-4xl text-red-500 font-bold mb-4">غير مصرح لك بالوصول</h1><p>ليس لديك الصلاحيات الكافية لعرض هذه الصفحة.</p></div>'
-          })
-          class UnauthorizedComponent {}
-          return UnauthorizedComponent;
-        })
+        loadComponent: () => import('./core/components/unauthorized.component').then(m => m.UnauthorizedComponent)
       }
     ]
   }

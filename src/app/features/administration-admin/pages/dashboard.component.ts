@@ -19,14 +19,14 @@ import { map } from 'rxjs';
           <p class="text-gray-500 font-medium">متابعة التقارير والامتثال للجهات التابعة.</p>
         </div>
 
-        <div *ngIf="availableAdmins().length > 1" class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
-          <span class="text-xs font-bold text-gray-400 px-3">تبديل الإدارة:</span>
+        <div *ngIf="availableAdmins().length > 1" class="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-2">
+          <span class="text-[10px] font-bold text-gray-400 px-3 uppercase tracking-wider">تبديل الإدارة:</span>
           <select 
             [ngModel]="activeAdminId()" 
             (ngModelChange)="switchAdmin($event)"
-            class="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-capmas-primary outline-none"
+            class="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-capmas-primary outline-none cursor-pointer min-w-[180px]"
           >
-            <option *ngFor="let admin of availableAdmins()" [value]="admin.id">{{ admin.name }}</option>
+            <option *ngFor="let admin of availableAdmins()" [value]="admin.id" [disabled]="admin.id === activeAdminId()">{{ admin.name }}</option>
           </select>
         </div>
       </div>
@@ -92,7 +92,7 @@ import { map } from 'rxjs';
           <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
               <h3 class="font-bold text-gray-800">التقارير الواردة للمراجعة</h3>
-              <a routerLink="/administration-admin/reports" class="text-xs font-bold text-capmas-primary hover:underline">عرض الكل</a>
+              <a routerLink="/administration-admin/reports" class="text-xs font-bold text-capmas-primary hover:underline transition-all">عرض كافة التقارير</a>
             </div>
             
             <div class="overflow-x-auto">

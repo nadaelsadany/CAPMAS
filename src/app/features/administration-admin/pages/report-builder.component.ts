@@ -125,12 +125,12 @@ import { AdministrationService, Report, Administration } from '../../../core/ser
         </div>
 
         <!-- Submit Button -->
-        <div class="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 flex justify-end gap-4 shadow-lg z-50">
+        <div class="sticky bottom-0 left-0 right-0 p-8 bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-end gap-4 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.05)] z-50 -mx-8 -mb-8 mt-12 rounded-b-3xl">
           <button type="button" [routerLink]="['/super-admin/external-entities', entityId]" 
-                  class="px-8 py-3 bg-gray-100 text-gray-500 rounded-2xl font-bold hover:bg-gray-200 transition-all">إلغاء</button>
+                  class="px-10 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold hover:bg-gray-200 transition-all">إلغاء</button>
           <button type="submit" [disabled]="!reportForm.valid" 
-                  class="px-12 py-3 bg-capmas-primary text-white rounded-2xl font-bold hover:bg-opacity-90 shadow-lg shadow-blue-200 transition-all disabled:opacity-50">
-            حفظ الإعدادات
+                  class="px-16 py-4 bg-capmas-primary text-white rounded-2xl font-bold hover:bg-opacity-90 shadow-xl shadow-blue-100 transition-all disabled:opacity-50">
+            حفظ إعدادات التقرير
           </button>
         </div>
 

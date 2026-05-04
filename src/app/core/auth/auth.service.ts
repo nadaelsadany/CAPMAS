@@ -9,7 +9,8 @@ export interface User {
   role: UserRole;
   sectorId?: string;
   institutionId?: string;
-  administrationIds?: string[]; // Multiple administrations for admin/reviewer roles
+  administrationIds?: string[];
+  assignedEntityId?: string; // For EXTERNAL_ENTITY_ADMIN
 }
 
 @Injectable({
@@ -42,7 +43,16 @@ export class AuthService {
       name: `Test ${role}`,
       email: `${role.toLowerCase()}@capmas.gov.eg`,
       role: role,
-      administrationIds: role === 'ADMINISTRATION_ADMIN' || role === 'ADMINISTRATION_REVIEWER' ? ['it-dept', 'stats-dept'] : []
+      administrationIds: role === 'ADMINISTRATION_ADMIN' || role === 'ADMINISTRATION_REVIEWER' ? ['it-dept', 'stats-dept'] : [],
+      assignedEntityId: role === 'EXTERNAL_ENTITY_ADMIN' ? 'customs' : undefined
+    });
+  }
+
+  impersonate(user: any) {
+    this.currentUser.set({
+      ...user,
+      administrationIds: user.assignedAdminIds || [],
+      assignedEntityId: user.assignedEntityId
     });
   }
 }

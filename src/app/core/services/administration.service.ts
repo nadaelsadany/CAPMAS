@@ -53,6 +53,20 @@ export interface Report {
   dynamicFields: any[];
 }
 
+export interface ReportSubmission {
+  id: string;
+  reportId: string;
+  reportName: string;
+  entityId: string;
+  adminId: string;
+  submittedAt: string;
+  status: 'approved' | 'under_review' | 'returned';
+  returnReason?: string;
+  returnedAt?: string;
+  delayDays: number;
+  data: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -73,13 +87,35 @@ export class AdministrationService {
       adminId: 'it-dept', adminName: 'إدارة تقنية المعلومات', entityId: 'customs', 
       frequency: 'monthly', dueDate: '5 من الشهر', gracePeriod: 2, inputMethod: 'excel', status: 'متأخر',
       dynamicFields: []
+    },
+    { 
+      id: 'rep-3', name: 'إحصاءات العمالة الربع سنوية', description: 'بيانات العمالة والأجور والتدريب',
+      adminId: 'hr-dept', adminName: 'إدارة الموارد البشرية', entityId: 'customs', 
+      frequency: 'quarterly', dueDate: '15 من الشهر', gracePeriod: 5, inputMethod: 'form', status: 'منتظم',
+      dynamicFields: [
+        { name: 'عدد الموظفين الجدد', type: 'number', required: true },
+        { name: 'إجمالي ساعات التدريب', type: 'number', required: false }
+      ]
+    }
+  ];
+
+  private initialSubmissions: ReportSubmission[] = [
+    {
+      id: 'sub-1', reportId: 'rep-1', reportName: 'بيان الواردات اليومي', entityId: 'customs', adminId: 'it-dept',
+      submittedAt: new Date(Date.now() - 86400000).toISOString(), status: 'approved', delayDays: 0, data: {}
+    },
+    {
+      id: 'sub-2', reportId: 'rep-2', reportName: 'تقرير حركة الحاويات الشهري', entityId: 'customs', adminId: 'it-dept',
+      submittedAt: new Date(Date.now() - 172800000).toISOString(), status: 'returned', 
+      returnReason: 'يوجد تضارب في أرقام الحاويات الفارغة بالجدول الثالث.', returnedAt: new Date(Date.now() - 43200000).toISOString(),
+      delayDays: 2, data: {}
     }
   ];
 
   private initialAdministrations: Administration[] = [
     { id: 'it-dept', name: 'إدارة تقنية المعلومات', description: 'مسؤولة عن البنية التحتية والأنظمة الرقمية', linkedEntityIds: ['customs', 'central-bank'] },
-    { id: 'stats-dept', name: 'إدارة الإحصاءات الاقتصادية', description: 'تحليل المؤشرات المالية والتجارية', linkedEntityIds: ['tax-authority'] },
-    { id: 'hr-dept', name: 'إدارة الموارد البشرية', description: 'شؤون العاملين والتدريب', linkedEntityIds: [] }
+    { id: 'stats-dept', name: 'إدارة الإحصاءات الاقتصادية', description: 'تحليل المؤشرات المالية والتجارية', linkedEntityIds: ['tax-authority', 'customs'] },
+    { id: 'hr-dept', name: 'إدارة الموارد البشرية', description: 'شؤون العاملين والتدريب', linkedEntityIds: ['customs'] }
   ];
 
   private initialEntities: ExternalEntity[] = [
@@ -93,11 +129,13 @@ export class AdministrationService {
   private administrationsSubject = new BehaviorSubject<Administration[]>([]);
   private entitiesSubject = new BehaviorSubject<ExternalEntity[]>([]);
   private reportsSubject = new BehaviorSubject<Report[]>([]);
+  private submissionsSubject = new BehaviorSubject<ReportSubmission[]>([]);
   private usersSubject = new BehaviorSubject<SystemUser[]>([]);
 
   administrations$ = this.administrationsSubject.asObservable();
   entities$ = this.entitiesSubject.asObservable();
   reports$ = this.reportsSubject.asObservable();
+  submissions$ = this.submissionsSubject.asObservable();
   users$ = this.usersSubject.asObservable();
 
   constructor() {
@@ -108,15 +146,17 @@ export class AdministrationService {
     try {
       const storedData = localStorage.getItem(this.STORAGE_KEY);
       if (storedData) {
-        const { administrations, entities, reports, users } = JSON.parse(storedData);
+        const { administrations, entities, reports, submissions, users } = JSON.parse(storedData);
         this.administrationsSubject.next(administrations || this.initialAdministrations);
         this.entitiesSubject.next(entities || this.initialEntities);
         this.reportsSubject.next(reports || this.initialReports);
+        this.submissionsSubject.next(submissions || this.initialSubmissions);
         this.usersSubject.next(users || this.getInitialUsers());
       } else {
         this.administrationsSubject.next(this.initialAdministrations);
         this.entitiesSubject.next(this.initialEntities);
         this.reportsSubject.next(this.initialReports);
+        this.submissionsSubject.next(this.initialSubmissions);
         this.usersSubject.next(this.getInitialUsers());
         this.saveToStorage();
       }
@@ -132,6 +172,7 @@ export class AdministrationService {
         administrations: this.administrationsSubject.value,
         entities: this.entitiesSubject.value,
         reports: this.reportsSubject.value,
+        submissions: this.submissionsSubject.value,
         users: this.usersSubject.value
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
@@ -142,9 +183,12 @@ export class AdministrationService {
 
   private getInitialUsers(): SystemUser[] {
     return [
-      { id: '1', name: 'أحمد محمود', email: 'admin@capmas.gov.eg', role: 'SUPER_ADMIN', joinDate: '2024/10/26', status: 'active' },
-      { id: '2', name: 'سارة علي', email: 's.ali@capmas.gov.eg', role: 'ADMINISTRATION_ADMIN', assignedAdminIds: ['it-dept'], joinDate: '2024/10/26', status: 'active' },
-      { id: '3', name: 'خالد حسن', email: 'k.hassan@customs.gov.eg', role: 'EXTERNAL_ENTITY_ADMIN', assignedEntityId: 'customs', joinDate: '2024/10/26', status: 'suspended' }
+      { id: '1', name: 'م. أحمد محمود', email: 'admin@capmas.gov.eg', role: 'SUPER_ADMIN', joinDate: '2024/10/26', status: 'active' },
+      { id: '2', name: 'أ. سارة علي', email: 's.ali@capmas.gov.eg', role: 'ADMINISTRATION_ADMIN', assignedAdminIds: ['it-dept'], joinDate: '2024/10/26', status: 'active' },
+      { id: '3', name: 'أ. خالد حسن', email: 'k.hassan@customs.gov.eg', role: 'EXTERNAL_ENTITY_ADMIN', assignedEntityId: 'customs', joinDate: '2024/10/26', status: 'active' },
+      { id: '4', name: 'د. منى حسن', email: 'm.hassan@capmas.gov.eg', role: 'ADMINISTRATION_REVIEWER', assignedAdminIds: ['it-dept'], joinDate: '2024/11/01', status: 'active' },
+      { id: '5', name: 'أ. يوسف محمد', email: 'y.mohamed@tax.gov.eg', role: 'EXTERNAL_ENTITY_ADMIN', assignedEntityId: 'tax-authority', joinDate: '2024/11/05', status: 'active' },
+      { id: '6', name: 'أ. ليلى إبراهيم', email: 'l.ibrahim@capmas.gov.eg', role: 'ADMINISTRATION_ADMIN', assignedAdminIds: ['hr-dept'], joinDate: '2024/11/10', status: 'suspended' }
     ];
   }
 
@@ -369,5 +413,30 @@ export class AdministrationService {
     const current = this.usersSubject.value;
     this.usersSubject.next(current.filter(u => u.id !== id));
     this.saveToStorage();
+  }
+
+  // Submission Methods
+  getSubmissionsByEntity(entityId: string) {
+    return this.submissionsSubject.value.filter(s => s.entityId === entityId);
+  }
+
+  getSubmissionsByAdmin(entityId: string, adminId: string) {
+    return this.submissionsSubject.value.filter(s => s.entityId === entityId && s.adminId === adminId);
+  }
+
+  getReturnedSubmissions(entityId: string, adminId: string) {
+    return this.submissionsSubject.value.filter(s => s.entityId === entityId && s.adminId === adminId && s.status === 'returned');
+  }
+
+  submitReport(submission: Omit<ReportSubmission, 'id' | 'submittedAt'>) {
+    const newSubmission: ReportSubmission = {
+      ...submission,
+      id: 'sub-' + Math.random().toString(36).substr(2, 9),
+      submittedAt: new Date().toISOString()
+    };
+    const current = this.submissionsSubject.value;
+    this.submissionsSubject.next([...current, newSubmission]);
+    this.saveToStorage();
+    return newSubmission;
   }
 }

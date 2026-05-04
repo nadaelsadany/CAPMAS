@@ -193,6 +193,31 @@ import { AuthService } from '../../../core/auth/auth.service';
 
         <!-- History Tab -->
         <div *ngIf="activeTab() === 'history'" class="animate-in fade-in duration-300">
+           <!-- Status Filters -->
+           <div class="px-8 py-4 border-b border-gray-50 bg-gray-50/30 flex items-center gap-4">
+             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">تصفية حسب الحالة:</span>
+             <div class="flex gap-2">
+               <button (click)="statusFilter.set('all')" 
+                       [class.bg-white]="statusFilter() === 'all'" 
+                       [class.shadow-sm]="statusFilter() === 'all'" 
+                       [class.text-capmas-primary]="statusFilter() === 'all'" 
+                       class="px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent"
+                       [class.border-gray-200]="statusFilter() === 'all'">الكل</button>
+               <button (click)="statusFilter.set('approved')" 
+                       [class.bg-green-500]="statusFilter() === 'approved'" 
+                       [class.text-white]="statusFilter() === 'approved'" 
+                       class="px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent hover:bg-green-50 text-green-600">تم الاعتماد</button>
+               <button (click)="statusFilter.set('returned')" 
+                       [class.bg-red-500]="statusFilter() === 'returned'" 
+                       [class.text-white]="statusFilter() === 'returned'" 
+                       class="px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent hover:bg-red-50 text-red-600">معاده للتصحيح</button>
+               <button (click)="statusFilter.set('under_review')" 
+                       [class.bg-orange-500]="statusFilter() === 'under_review'" 
+                       [class.text-white]="statusFilter() === 'under_review'" 
+                       class="px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent hover:bg-orange-50 text-orange-600">قيد المراجعة</button>
+             </div>
+           </div>
+
            <table class="w-full text-right border-collapse">
             <thead>
               <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50/50 border-b border-gray-100">
@@ -223,6 +248,9 @@ import { AuthService } from '../../../core/auth/auth.service';
               </tr>
             </tbody>
           </table>
+          <div *ngIf="historySubmissions().length === 0" class="text-center py-20">
+             <p class="text-gray-400 font-bold">لا توجد تقارير مطابقة لهذا التصنيف.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -235,6 +263,7 @@ export class EntityPortalComponent implements OnInit {
 
   adminId = signal<string | null>(null);
   activeTab = signal<'required' | 'returned' | 'history'>('required');
+  statusFilter = signal<'all' | 'approved' | 'returned' | 'under_review'>('all');
 
   tabs: { id: 'required' | 'returned' | 'history'; label: string }[] = [
     { id: 'required', label: 'التقارير المطلوبة' },
@@ -266,8 +295,17 @@ export class EntityPortalComponent implements OnInit {
   historySubmissions = computed(() => {
     const adminId = this.adminId();
     const entityId = this.auth.currentUser()?.assignedEntityId;
+    const filter = this.statusFilter();
+    
     if (!adminId || !entityId) return [];
-    return this.adminService.getSubmissionsByAdmin(entityId, adminId);
+    
+    let submissions = this.adminService.getSubmissionsByAdmin(entityId, adminId);
+    
+    if (filter !== 'all') {
+      submissions = submissions.filter(s => s.status === filter);
+    }
+    
+    return submissions;
   });
 
   ngOnInit() {
@@ -297,7 +335,7 @@ export class EntityPortalComponent implements OnInit {
     switch (status) {
       case 'approved': return 'تم الاعتماد';
       case 'under_review': return 'قيد المراجعة';
-      case 'returned': return 'مُرجع للتصحيح';
+      case 'returned': return 'معاده للتصحيح';
       default: return status;
     }
   }

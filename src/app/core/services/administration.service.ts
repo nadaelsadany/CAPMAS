@@ -109,6 +109,10 @@ export class AdministrationService {
       submittedAt: new Date(Date.now() - 172800000).toISOString(), status: 'returned', 
       returnReason: 'يوجد تضارب في أرقام الحاويات الفارغة بالجدول الثالث.', returnedAt: new Date(Date.now() - 43200000).toISOString(),
       delayDays: 2, data: {}
+    },
+    {
+      id: 'sub-3', reportId: 'rep-1', reportName: 'بيان الواردات الأسبوعي', entityId: 'customs', adminId: 'it-dept',
+      submittedAt: new Date(Date.now() - 43200000).toISOString(), status: 'under_review', delayDays: 0, data: {}
     }
   ];
 

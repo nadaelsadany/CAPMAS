@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { KpiOverviewComponent } from './components/kpi-overview.component';
 import { SectorAnalyticsComponent } from './components/sector-analytics.component';
-import { InstitutionMappingComponent } from './components/institution-mapping.component';
 import { ReviewWorkloadComponent } from './components/review-workload.component';
 import { ActivityTimelineComponent } from './components/activity-timeline.component';
 import { AdminActionsComponent } from './components/admin-actions.component';
@@ -12,7 +11,6 @@ import { AdminActionsComponent } from './components/admin-actions.component';
   imports: [
     KpiOverviewComponent,
     SectorAnalyticsComponent,
-    InstitutionMappingComponent,
     ReviewWorkloadComponent,
     ActivityTimelineComponent,
     AdminActionsComponent
@@ -39,16 +37,9 @@ import { AdminActionsComponent } from './components/admin-actions.component';
       <!-- Review Workload (Horizontal Bar & Heatmap) -->
       <app-review-workload></app-review-workload>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Institution Mapping (Hierarchy) -->
-        <div class="lg:col-span-1">
-           <app-institution-mapping></app-institution-mapping>
-        </div>
-
-        <!-- Recent Activity Timeline -->
-        <div class="lg:col-span-1">
-           <app-activity-timeline></app-activity-timeline>
-        </div>
+      <!-- Recent Activity Timeline -->
+      <div class="max-w-4xl">
+        <app-activity-timeline></app-activity-timeline>
       </div>
 
     </div>

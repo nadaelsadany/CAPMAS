@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AdministrationService, Report, Administration } from '../../../core/services/administration.service';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-report-builder',
@@ -121,18 +122,45 @@ import { AdministrationService, Report, Administration } from '../../../core/ser
                   <button type="button" (click)="removeSection(si)" class="p-1 text-red-400 hover:text-red-600 text-xs">حذف</button>
                 </div>
                 <!-- TABLE SECTION -->
-                <div *ngIf="getSectionType(sec)==='table'">
-                  <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold text-gray-500">تعريف الأعمدة</span>
-                    <button type="button" (click)="addTableColumn(sec)" class="text-xs font-bold text-emerald-600 hover:underline">+ عمود</button>
+                <div *ngIf="getSectionType(sec)==='table'" class="space-y-4">
+                  <!-- Row Label Header -->
+                  <div class="bg-white p-3 rounded-lg border border-gray-200">
+                    <label class="text-xs font-bold text-gray-500 mb-1 block">عنوان عمود التسمية (مثال: المحافظة)</label>
+                    <input [formControl]="$any(sec).controls.rowLabelHeader" placeholder="مثال: المحافظة / البيان" class="w-full p-2 bg-gray-50 rounded-lg outline-none font-bold text-xs border border-transparent focus:border-capmas-primary">
                   </div>
-                  <div *ngFor="let col of getTableColumns(sec).controls; let ci = index" class="flex gap-3 items-center mb-2 bg-white p-3 rounded-lg border border-gray-200">
-                    <input [formControl]="$any(col).controls.name" placeholder="اسم العمود" class="flex-1 p-2 bg-gray-50 rounded-lg outline-none font-bold text-xs border border-transparent focus:border-capmas-primary">
-                    <select [formControl]="$any(col).controls.type" class="p-2 bg-gray-50 rounded-lg outline-none font-bold text-xs">
-                      <option value="text">نص</option><option value="number">رقم</option><option value="date">تاريخ</option><option value="boolean">نعم/لا</option>
-                    </select>
-                    <label class="flex items-center gap-1 text-xs"><input type="checkbox" [formControl]="$any(col).controls.required" class="w-3 h-3">مطلوب</label>
-                    <button type="button" (click)="removeTableColumn(sec, ci)" class="text-red-400 hover:text-red-600 text-xs">×</button>
+                  <!-- Row Labels -->
+                  <div class="bg-white p-3 rounded-lg border border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="text-xs font-bold text-gray-500">تسميات الصفوف</span>
+                      <button type="button" (click)="addRowLabel(sec)" class="text-xs font-bold text-emerald-600 hover:underline">+ صف</button>
+                    </div>
+                    <div *ngFor="let lbl of getRowLabels(sec).controls; let li = index" class="flex gap-2 items-center mb-1">
+                      <input [formControl]="$any(lbl)" [placeholder]="'صف ' + (li+1)" class="flex-1 p-2 bg-gray-50 rounded-lg outline-none font-bold text-xs border border-transparent focus:border-capmas-primary">
+                      <button type="button" (click)="removeRowLabel(sec, li)" class="text-red-400 hover:text-red-600 text-xs">×</button>
+                    </div>
+                  </div>
+                  <!-- Column Groups -->
+                  <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500">مجموعات الأعمدة</span>
+                    <button type="button" (click)="addColumnGroup(sec)" class="text-xs font-bold text-emerald-600 hover:underline">+ مجموعة</button>
+                  </div>
+                  <div *ngFor="let grp of getColumnGroups(sec).controls; let gi = index" class="bg-white p-3 rounded-lg border border-emerald-200 space-y-2">
+                    <div class="flex gap-2 items-center">
+                      <input [formControl]="$any(grp).controls.name" placeholder="اسم المجموعة" class="flex-1 p-2 bg-emerald-50 rounded-lg outline-none font-bold text-xs border border-transparent focus:border-emerald-400">
+                      <button type="button" (click)="removeColumnGroup(sec, gi)" class="text-red-400 hover:text-red-600 text-xs">حذف</button>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-bold text-gray-400 mr-2">الأعمدة الفرعية</span>
+                      <button type="button" (click)="addSubColumn(grp)" class="text-[10px] font-bold text-capmas-primary hover:underline">+ عمود فرعي</button>
+                    </div>
+                    <div *ngFor="let sub of getSubColumns(grp).controls; let sci = index" class="flex gap-2 items-center mr-4 bg-gray-50 p-2 rounded-lg">
+                      <input [formControl]="$any(sub).controls.name" placeholder="اسم العمود" class="flex-1 p-1 bg-white rounded outline-none font-bold text-xs border border-transparent focus:border-capmas-primary">
+                      <select [formControl]="$any(sub).controls.type" class="p-1 bg-white rounded outline-none font-bold text-xs">
+                        <option value="text">نص</option><option value="number">رقم</option><option value="date">تاريخ</option>
+                      </select>
+                      <label class="flex items-center gap-1 text-[10px]"><input type="checkbox" [formControl]="$any(sub).controls.required" class="w-3 h-3">مطلوب</label>
+                      <button type="button" (click)="removeSubColumn(grp, sci)" class="text-red-400 hover:text-red-600 text-[10px]">×</button>
+                    </div>
                   </div>
                 </div>
                 <!-- FORM SECTION -->
@@ -242,25 +270,56 @@ import { AdministrationService, Report, Administration } from '../../../core/ser
                 <div *ngFor="let sec of sections.controls" class="space-y-3">
                   <h3 *ngIf="sec.get('title')?.value" class="text-base font-bold text-gray-800 border-b border-gray-200 pb-2">{{ sec.get('title')?.value }}</h3>
                   <!-- TABLE PREVIEW -->
-                  <div *ngIf="getSectionType(sec)==='table'" class="overflow-x-auto">
-                    <table class="w-full border-collapse border border-gray-300 text-sm">
-                      <thead><tr class="bg-gray-100">
-                        <th class="border border-gray-300 p-3 font-bold text-gray-700 text-xs">#</th>
-                        <th *ngFor="let col of getTableColumns(sec).controls" class="border border-gray-300 p-3 font-bold text-gray-700 text-xs">
-                          {{ col.get('name')?.value || 'عمود' }}
-                          <span *ngIf="col.get('required')?.value" class="text-red-500">*</span>
-                        </th>
-                      </tr></thead>
-                      <tbody>
-                        <tr *ngFor="let row of getPreviewRows(sec); let ri = index" class="hover:bg-gray-50">
-                          <td class="border border-gray-300 p-2 text-center text-gray-400 text-xs">{{ ri + 1 }}</td>
-                          <td *ngFor="let col of getTableColumns(sec).controls" class="border border-gray-300 p-2">
-                            <input disabled class="w-full p-1 bg-gray-50 border border-gray-200 rounded text-xs opacity-60 cursor-not-allowed">
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <button type="button" disabled class="mt-2 text-xs font-bold text-emerald-600 opacity-60 cursor-not-allowed">+ إضافة صف</button>
+                  <div *ngIf="getSectionType(sec)==='table'" class="overflow-hidden border border-gray-200 rounded-xl bg-white shadow-sm">
+                    <div class="overflow-x-auto custom-scrollbar">
+                      <table class="w-full border-collapse text-right min-w-[600px]">
+                        <thead>
+                          <!-- Group Headers -->
+                          <tr class="bg-gray-50/80 border-b border-gray-200">
+                            <th rowspan="2" class="border-l border-gray-200 p-4 font-bold text-gray-700 text-xs w-48 sticky right-0 bg-gray-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                              {{ sec.get('rowLabelHeader')?.value || 'البيان' }}
+                            </th>
+                            <th *ngFor="let grp of getColumnGroups(sec).controls" 
+                                [attr.colspan]="getSubColumns(grp).length || 1"
+                                class="border-l border-gray-200 p-3 font-bold text-gray-600 text-[10px] text-center bg-emerald-50/30">
+                              {{ grp.get('name')?.value || 'مجموعة' }}
+                            </th>
+                          </tr>
+                          <!-- Sub Headers -->
+                          <tr class="bg-white border-b border-gray-200">
+                            <ng-container *ngFor="let grp of getColumnGroups(sec).controls">
+                              <th *ngFor="let sub of getSubColumns(grp).controls" 
+                                  class="border-l border-gray-200 p-3 font-bold text-gray-500 text-[10px] text-center min-w-[120px]">
+                                {{ sub.get('name')?.value || 'عمود' }}
+                                <span *ngIf="sub.get('required')?.value" class="text-red-500">*</span>
+                              </th>
+                              <th *ngIf="getSubColumns(grp).length === 0" class="border-l border-gray-200 p-3 font-bold text-gray-300 text-[10px] text-center italic">لا توجد أعمدة</th>
+                            </ng-container>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let rowValue of getPreviewRows(sec); let ri = index" class="hover:bg-blue-50/30 transition-colors">
+                            <td class="border-l border-gray-200 p-4 font-bold text-gray-800 text-xs sticky right-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                              {{ rowValue || 'صف ' + (ri + 1) }}
+                            </td>
+                            <ng-container *ngFor="let grp of getColumnGroups(sec).controls">
+                              <td *ngFor="let sub of getSubColumns(grp).controls" class="border-l border-gray-100 p-2">
+                                <input disabled [placeholder]="sub.get('type')?.value === 'number' ? '0.00' : '...'" 
+                                       class="w-full p-2 bg-gray-50/50 border border-gray-200 rounded-lg text-xs opacity-60 cursor-not-allowed">
+                              </td>
+                              <td *ngIf="getSubColumns(grp).length === 0" class="border-l border-gray-100 p-2 bg-gray-50/30"></td>
+                            </ng-container>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="p-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                      <span class="text-[10px] text-gray-400 font-bold">إجمالي الأعمدة: {{ getTotalSubColumns(sec) }} | إجمالي الصفوف: {{ getPreviewRows(sec).length }}</span>
+                      <button type="button" disabled class="text-xs font-bold text-emerald-600 opacity-60 cursor-not-allowed flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        إضافة صف جديد
+                      </button>
+                    </div>
                   </div>
                   <!-- FORM PREVIEW -->
                   <div *ngIf="getSectionType(sec)==='form'" class="space-y-4">
@@ -373,8 +432,9 @@ export class ReportBuilderComponent implements OnInit {
     this.sections.push(this.fb.group({
       type: ['table'],
       title: [''],
-      columns: this.fb.array([]),
-      rows: this.fb.array([])
+      columnGroups: this.fb.array([]),
+      rowLabelHeader: [''],
+      rowLabels: this.fb.array([])
     }));
   }
 
@@ -386,47 +446,73 @@ export class ReportBuilderComponent implements OnInit {
     }));
   }
 
-  // Table helpers
-  getTableColumns(section: any): FormArray {
-    return section.get('columns') as FormArray;
+  // Column group helpers
+  getColumnGroups(section: any): FormArray {
+    return section.get('columnGroups') as FormArray;
   }
-  addTableColumn(section: any) {
-    this.getTableColumns(section).push(this.fb.group({
+  addColumnGroup(section: any) {
+    this.getColumnGroups(section).push(this.fb.group({
+      name: ['', Validators.required],
+      subColumns: this.fb.array([])
+    }));
+  }
+  removeColumnGroup(section: any, index: number) {
+    this.getColumnGroups(section).removeAt(index);
+  }
+  getSubColumns(group: any): FormArray {
+    return group.get('subColumns') as FormArray;
+  }
+  addSubColumn(group: any) {
+    this.getSubColumns(group).push(this.fb.group({
       name: ['', Validators.required],
       type: ['text', Validators.required],
       required: [false]
     }));
   }
+  removeSubColumn(group: any, index: number) {
+    this.getSubColumns(group).removeAt(index);
+  }
+
+  // Row label helpers
+  getRowLabels(section: any): FormArray {
+    return section.get('rowLabels') as FormArray;
+  }
+  addRowLabel(section: any) {
+    this.getRowLabels(section).push(this.fb.control(''));
+  }
+  removeRowLabel(section: any, index: number) {
+    this.getRowLabels(section).removeAt(index);
+  }
+
+  // Flat columns (kept for backwards compat)
+  getTableColumns(section: any): FormArray {
+    return (section.get('columns') || section.get('columnGroups')) as FormArray;
+  }
+  addTableColumn(section: any) {
+    if (section.get('columnGroups')) {
+      this.addColumnGroup(section);
+    }
+  }
   getTableRows(section: any): FormArray {
     return section.get('rows') as FormArray;
   }
-  addTableRow(section: any) {
-    const cols = this.getTableColumns(section);
-    const rowGroup = this.fb.group({});
-    cols.controls.forEach((col: any) => {
-      const colName = col.get('name')?.value || 'col';
-      rowGroup.addControl(colName, this.fb.control(''));
-    });
-    this.getTableRows(section).push(rowGroup);
-  }
+  addTableRow(section: any) {}
 
-  // Utility for preview rendering
+  // Utility for preview
   getSectionType(section: any): string {
     return section.get('type')?.value;
   }
-
   removeSection(index: number) {
     this.sections.removeAt(index);
   }
-
   removeTableColumn(section: any, index: number) {
-    this.getTableColumns(section).removeAt(index);
+    if (section.get('columnGroups')) {
+      this.getColumnGroups(section).removeAt(index);
+    }
   }
-
   getSectionFields(section: any): FormArray {
     return section.get('fields') as FormArray;
   }
-
   addSectionField(section: any) {
     this.getSectionFields(section).push(this.fb.group({
       name: ['', Validators.required],
@@ -434,15 +520,28 @@ export class ReportBuilderComponent implements OnInit {
       required: [false]
     }));
   }
-
   removeSectionField(section: any, index: number) {
     this.getSectionFields(section).removeAt(index);
   }
 
+  getTotalSubColumns(section: any): number {
+    let total = 0;
+    const groups = this.getColumnGroups(section);
+    groups.controls.forEach((g: any) => {
+      const subs = this.getSubColumns(g);
+      total += subs.length > 0 ? subs.length : 1;
+    });
+    return total;
+  }
+
   getPreviewRows(section: any): any[] {
-    const cols = this.getTableColumns(section);
-    if (cols.length === 0) return [];
-    return [1, 2, 3]; // Show 3 placeholder rows in preview
+    const groups = this.getColumnGroups(section);
+    if (!groups || groups.length === 0) return [];
+    const labels = this.getRowLabels(section);
+    if (labels && labels.length > 0) {
+      return labels.controls.map((l: any) => l.value);
+    }
+    return ['1', '2', '3'];
   }
 
   ngOnInit(): void {
@@ -530,17 +629,87 @@ export class ReportBuilderComponent implements OnInit {
     this.isDragging = false;
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
-      this.uploadedFileName = files[0].name;
-      this.reportForm.patchValue({ inputMethod: 'excel' });
+      this.processTemplate(files[0]);
     }
   }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
-      this.uploadedFileName = file.name;
-      this.reportForm.patchValue({ inputMethod: 'excel' });
+      this.processTemplate(file);
     }
+  }
+
+  async processTemplate(file: File) {
+    this.uploadedFileName = file.name;
+    this.reportForm.patchValue({ inputMethod: 'excel' });
+
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Parse multi-row headers
+        const jsonData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        if (jsonData.length >= 2) {
+          this.generateTableFromExcel(jsonData);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  }
+
+  generateTableFromExcel(data: any[][]) {
+    // Clear existing sections
+    this.sections.clear();
+    
+    // Add a new table section
+    this.addTableSection();
+    const tableSection = this.sections.at(0);
+    tableSection.patchValue({ title: 'البيانات المستوردة من القالب' });
+    
+    const row1 = data[0]; // Groups
+    const row2 = data[1]; // Sub-columns
+    const dataRows = data.slice(2); // Possible row labels
+
+    let currentGroup: any = null;
+    let currentGroupName = '';
+
+    for (let i = 1; i < row2.length; i++) {
+      const groupName = row1[i] || currentGroupName;
+      const subColName = row2[i];
+
+      if (!subColName) continue;
+
+      if (groupName !== currentGroupName || !currentGroup) {
+        currentGroupName = groupName || 'مجموعة عامة';
+        this.addColumnGroup(tableSection);
+        const groups = this.getColumnGroups(tableSection);
+        currentGroup = groups.at(groups.length - 1);
+        currentGroup.patchValue({ name: currentGroupName });
+      }
+
+      this.addSubColumn(currentGroup);
+      const subs = this.getSubColumns(currentGroup);
+      subs.at(subs.length - 1).patchValue({ 
+        name: subColName,
+        type: typeof dataRows[0]?.[i] === 'number' ? 'number' : 'text'
+      });
+    }
+
+    // Row labels (from first column)
+    tableSection.patchValue({ rowLabelHeader: row2[0] || 'البيان' });
+    const rowLabels = this.getRowLabels(tableSection);
+    dataRows.forEach(row => {
+      if (row[0]) {
+        rowLabels.push(this.fb.control(row[0]));
+      }
+    });
+
+    this.creationMode = 'manual'; // Switch to manual to show the generated structure
   }
 
   removeTemplate() {

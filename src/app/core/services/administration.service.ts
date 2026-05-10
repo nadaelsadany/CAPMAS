@@ -51,6 +51,7 @@ export interface Report {
   inputMethod: 'form' | 'excel' | 'both';
   status: 'منتظم' | 'متأخر';
   dynamicFields: any[];
+  sections?: any[];
 }
 
 export interface ReportSubmission {

@@ -71,26 +71,114 @@ import { AuthService } from '../../../core/auth/auth.service';
         <div *ngIf="!isSubmitted()" class="p-10">
           
           <!-- Form Mode -->
-          <div *ngIf="selectedMethod() === 'form'" class="space-y-8 animate-in fade-in duration-500">
-            <div *ngFor="let field of report()?.dynamicFields" class="space-y-3">
-              <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">{{ field.name }} {{ field.required ? '*' : '' }}</label>
-              <input 
-                *ngIf="field.type === 'number'"
-                type="number"
-                class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-capmas-primary outline-none transition-all"
-                placeholder="0.00"
-              >
-              <input 
-                *ngIf="field.type === 'text'"
-                type="text"
-                class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-capmas-primary outline-none transition-all"
-                placeholder="أدخل البيانات هنا..."
-              >
+          <div *ngIf="selectedMethod() === 'form'" class="space-y-12 animate-in fade-in duration-500">
+            
+            <div *ngFor="let sec of report()?.sections" class="space-y-6">
+              <h3 *ngIf="sec.title" class="text-lg font-black text-gray-800 flex items-center gap-3">
+                <span class="w-2 h-6 bg-capmas-primary rounded-full"></span>
+                {{ sec.title }}
+              </h3>
+
+              <!-- FORM SECTION -->
+              <div *ngIf="sec.type === 'form'" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100">
+                <div *ngFor="let field of sec.fields" class="space-y-2">
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest">{{ field.name }} {{ field.required ? '*' : '' }}</label>
+                  <input 
+                    [type]="field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'"
+                    class="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-capmas-primary outline-none transition-all shadow-sm"
+                    [placeholder]="field.type === 'number' ? '0.00' : 'أدخل البيانات هنا...'"
+                  >
+                </div>
+              </div>
+
+              <!-- TABLE SECTION -->
+              <div *ngIf="sec.type === 'table'" class="space-y-4">
+                <div class="overflow-hidden border border-gray-200 rounded-[2rem] bg-white shadow-xl shadow-gray-100/50">
+                  <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full border-collapse text-right min-w-[800px]">
+                      <thead>
+                        <!-- Group Headers -->
+                        <tr class="bg-gray-800 border-b border-gray-700">
+                          <th rowspan="2" class="border-l border-gray-700 p-6 font-black text-white text-xs w-56 sticky right-0 bg-gray-800 z-20">
+                            {{ sec.rowLabelHeader || 'البيان' }}
+                          </th>
+                          <th *ngFor="let grp of sec.columnGroups" 
+                              [attr.colspan]="grp.subColumns?.length || 1"
+                              class="border-l border-gray-700 p-4 font-black text-blue-200 text-[10px] text-center bg-gray-700/50">
+                            {{ grp.name }}
+                          </th>
+                        </tr>
+                        <!-- Sub Headers -->
+                        <tr class="bg-gray-700 border-b border-gray-600">
+                          <ng-container *ngFor="let grp of sec.columnGroups">
+                            <th *ngFor="let sub of grp.subColumns" 
+                                class="border-l border-gray-600 p-4 font-bold text-gray-300 text-[10px] text-center min-w-[140px]">
+                              {{ sub.name }}
+                              <span *ngIf="sub.required" class="text-red-400">*</span>
+                            </th>
+                            <th *ngIf="!grp.subColumns?.length" class="border-l border-gray-600 p-4 font-bold text-gray-500 text-[10px] text-center italic">لا توجد أعمدة</th>
+                          </ng-container>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let rowLabel of sec.rowLabels; let ri = index" class="hover:bg-blue-50/50 transition-colors border-b border-gray-50">
+                          <td class="border-l border-gray-100 p-6 font-black text-gray-800 text-xs sticky right-0 bg-white z-10 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]">
+                            {{ rowLabel }}
+                          </td>
+                          <ng-container *ngFor="let grp of sec.columnGroups">
+                            <td *ngFor="let sub of grp.subColumns" class="border-l border-gray-50 p-3">
+                              <input [type]="sub.type === 'number' ? 'number' : sub.type === 'date' ? 'date' : 'text'"
+                                     [placeholder]="sub.type === 'number' ? '0.00' : '...'" 
+                                     class="w-full p-3 bg-gray-50/50 border border-gray-100 rounded-xl text-xs focus:bg-white focus:border-capmas-primary outline-none transition-all">
+                            </td>
+                            <td *ngIf="!grp.subColumns?.length" class="border-l border-gray-50 p-3 bg-gray-50/30"></td>
+                          </ng-container>
+                        </tr>
+                        <!-- Empty row if no labels -->
+                        <tr *ngIf="!sec.rowLabels?.length" class="border-b border-gray-50">
+                          <td class="p-6 text-center text-gray-400 font-bold italic" [attr.colspan]="100">لا توجد صفوف محددة</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                    <div class="flex gap-4">
+                      <span class="text-xs text-gray-400 font-bold flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                        إجمالي الأعمدة: {{ getTotalColumns(sec) }}
+                      </span>
+                      <span class="text-xs text-gray-400 font-bold flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        إجمالي الصفوف: {{ sec.rowLabels?.length || 0 }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- STATIC TEXT SECTION -->
+              <div *ngIf="sec.type === 'static'" class="p-8 bg-blue-50/30 border border-blue-100 rounded-[2rem]">
+                <p class="text-sm text-gray-700 font-semibold leading-relaxed whitespace-pre-wrap">{{ sec.content }}</p>
+              </div>
+
             </div>
             
-            <div *ngIf="!report()?.dynamicFields?.length" class="text-center py-10 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-               <p class="text-gray-400 font-bold">لا توجد حقول نموذج محددة لهذا التقرير.</p>
+            <div *ngIf="!report()?.sections?.length && !report()?.dynamicFields?.length" class="text-center py-20 bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
+               <p class="text-gray-400 font-bold italic text-lg">لا توجد حقول أو أقسام محددة لهذا التقرير.</p>
             </div>
+
+            <!-- Fallback for old dynamicFields -->
+            <div *ngIf="report()?.dynamicFields?.length && !report()?.sections?.length" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100">
+              <div *ngFor="let field of report()?.dynamicFields" class="space-y-2">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest">{{ field.name }} {{ field.required ? '*' : '' }}</label>
+                <input 
+                  [type]="field.type === 'number' ? 'number' : 'text'"
+                  class="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-capmas-primary outline-none transition-all shadow-sm"
+                  [placeholder]="field.type === 'number' ? '0.00' : 'أدخل البيانات هنا...'"
+                >
+              </div>
+            </div>
+
           </div>
 
           <!-- Excel Mode -->
@@ -193,5 +281,13 @@ export class EntityDataEntryComponent implements OnInit {
 
   resetForm() {
     this.isSubmitted.set(false);
+  }
+
+  getTotalColumns(section: any): number {
+    let total = 0;
+    section.columnGroups?.forEach((g: any) => {
+      total += g.subColumns?.length || 1;
+    });
+    return total;
   }
 }

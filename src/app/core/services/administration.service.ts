@@ -30,7 +30,7 @@ export interface SystemUser {
   id: string;
   name: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'EXTERNAL_ENTITY_ADMIN' | 'ADMINISTRATION_REVIEWER';
+  role: 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'EXTERNAL_ENTITY_ADMIN' | 'ADMINISTRATION_REVIEWER' | 'DECISION_MAKER';
   assignedAdminIds?: string[]; // Multiple for ADMINISTRATION_ADMIN or ADMINISTRATION_REVIEWER
   assignedEntityId?: string;   // Single for EXTERNAL_ENTITY_ADMIN
   joinDate: string;
@@ -155,7 +155,12 @@ export class AdministrationService {
         this.entitiesSubject.next(entities || this.initialEntities);
         this.reportsSubject.next(reports || this.initialReports);
         this.submissionsSubject.next(submissions || this.initialSubmissions);
-        this.usersSubject.next(users || this.getInitialUsers());
+        let loadedUsers = users || this.getInitialUsers();
+        // Ensure Decision Maker exists for testing if loading from old storage
+        if (!loadedUsers.find((u: any) => u.role === 'DECISION_MAKER')) {
+          loadedUsers.push({ id: '7', name: 'د. محمود وجدي', email: 'm.wagdy@capmas.gov.eg', role: 'DECISION_MAKER', joinDate: '2024/12/01', status: 'active' });
+        }
+        this.usersSubject.next(loadedUsers);
       } else {
         this.administrationsSubject.next(this.initialAdministrations);
         this.entitiesSubject.next(this.initialEntities);
@@ -192,7 +197,8 @@ export class AdministrationService {
       { id: '3', name: 'أ. خالد حسن', email: 'k.hassan@customs.gov.eg', role: 'EXTERNAL_ENTITY_ADMIN', assignedEntityId: 'customs', joinDate: '2024/10/26', status: 'active' },
       { id: '4', name: 'د. منى حسن', email: 'm.hassan@capmas.gov.eg', role: 'ADMINISTRATION_REVIEWER', assignedAdminIds: ['it-dept'], joinDate: '2024/11/01', status: 'active' },
       { id: '5', name: 'أ. يوسف محمد', email: 'y.mohamed@tax.gov.eg', role: 'EXTERNAL_ENTITY_ADMIN', assignedEntityId: 'tax-authority', joinDate: '2024/11/05', status: 'active' },
-      { id: '6', name: 'أ. ليلى إبراهيم', email: 'l.ibrahim@capmas.gov.eg', role: 'ADMINISTRATION_ADMIN', assignedAdminIds: ['hr-dept'], joinDate: '2024/11/10', status: 'suspended' }
+      { id: '6', name: 'أ. ليلى إبراهيم', email: 'l.ibrahim@capmas.gov.eg', role: 'ADMINISTRATION_ADMIN', assignedAdminIds: ['hr-dept'], joinDate: '2024/11/10', status: 'suspended' },
+      { id: '7', name: 'د. محمود وجدي', email: 'm.wagdy@capmas.gov.eg', role: 'DECISION_MAKER', joinDate: '2024/12/01', status: 'active' }
     ];
   }
 

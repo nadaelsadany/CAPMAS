@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { AdministrationAdminComponent } from './administration-admin.component';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./pages/dashboard.component').then(m => m.AdministrationDashboardComponent)
+    redirectTo: 'reports',
+    pathMatch: 'full'
   },
   {
     path: 'builder',

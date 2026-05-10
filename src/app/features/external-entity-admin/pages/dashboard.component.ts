@@ -12,44 +12,48 @@ import { AuthService } from '../../../core/auth/auth.service';
     <div class="p-8 max-w-7xl mx-auto">
       <div class="mb-10 text-center animate-in fade-in zoom-in duration-700">
         <h1 class="text-4xl font-black text-gray-800 mb-4">بوابة تبادل البيانات للجهات الخارجية</h1>
-        <p class="text-gray-500 max-w-2xl mx-auto font-medium text-lg">يرجى اختيار الإدارة المختصة لمتابعة التزاماتك وتقديم التقارير المطلوبة.</p>
+        <p class="text-gray-500 max-w-2xl mx-auto font-medium text-lg">يرجى اختيار الإدارة المختصة لتقديم التقارير المطلوبة.</p>
         <div class="w-24 h-1.5 bg-capmas-primary mx-auto mt-6 rounded-full opacity-20"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div 
-          *ngFor="let admin of linkedAdministrations()" 
-          [routerLink]="['portal', admin.id]"
-          class="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:border-capmas-primary/20 transition-all cursor-pointer group relative overflow-hidden"
-        >
-          <div class="absolute -right-6 -top-6 w-24 h-24 bg-gray-50 rounded-full group-hover:bg-capmas-primary/5 transition-colors"></div>
-          
-          <div class="relative z-10">
-            <div class="flex justify-between items-start mb-6">
-              <div class="w-14 h-14 rounded-2xl bg-blue-50 text-capmas-primary flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18" /></svg>
-              </div>
-              <span class="text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest" 
-                    [ngClass]="admin.isDelayed ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
-                {{ admin.isDelayed ? 'توجد تنبيهات' : 'ملتزم' }}
-              </span>
-            </div>
-
-            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-capmas-primary transition-colors">{{ admin.name }}</h3>
-            <p class="text-xs text-gray-400 font-bold mb-6 line-clamp-2">{{ admin.description }}</p>
-
-            <div class="grid grid-cols-2 gap-4 pt-6 border-t border-gray-50">
-              <div class="flex flex-col">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">تقارير مطلوبة</span>
-                <span class="text-lg font-black text-capmas-primary">{{ admin.requiredReports }}</span>
-              </div>
-              <div class="flex flex-col text-left items-end">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">آخر موعد</span>
-                <span class="text-xs font-bold text-gray-600">{{ admin.nextDeadline }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <table class="w-full text-right border-collapse">
+          <thead>
+            <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50/50 border-b border-gray-100">
+              <th class="px-8 py-5">الإدارة المختصة</th>
+              <th class="px-8 py-5">الوصف</th>
+              <th class="px-8 py-5 text-center">التقارير المطلوبة</th>
+              <th class="px-8 py-5 text-left">الإجراء</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr 
+              *ngFor="let admin of linkedAdministrations()" 
+              [routerLink]="['portal', admin.id]"
+              class="group hover:bg-gray-50/50 transition-colors cursor-pointer"
+            >
+              <td class="px-8 py-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-xl bg-blue-50 text-capmas-primary flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18" /></svg>
+                  </div>
+                  <h4 class="text-sm font-bold text-gray-800 group-hover:text-capmas-primary transition-colors">{{ admin.name }}</h4>
+                </div>
+              </td>
+              <td class="px-8 py-6">
+                <p class="text-xs text-gray-500 font-bold line-clamp-1">{{ admin.description }}</p>
+              </td>
+              <td class="px-8 py-6 text-center">
+                <span class="text-sm font-black text-gray-700">{{ admin.requiredReports }}</span>
+              </td>
+              <td class="px-8 py-6 text-left">
+                <button class="px-5 py-2 bg-gray-100 text-gray-600 text-[10px] font-black rounded-xl group-hover:bg-capmas-primary group-hover:text-white transition-all">
+                  الدخول للبوابة
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   `
@@ -68,9 +72,7 @@ export class EntityDashboardComponent implements OnInit {
       .filter(a => a.linkedEntityIds.includes(entityId))
       .map(a => ({
         ...a,
-        requiredReports: 3, // Mocking
-        nextDeadline: '15 مايو', // Mocking
-        isDelayed: Math.random() > 0.7 // Mocking
+        requiredReports: 3 // Mocking
       }));
   });
 

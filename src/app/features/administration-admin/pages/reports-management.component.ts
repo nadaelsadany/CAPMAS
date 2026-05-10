@@ -51,40 +51,45 @@ type ReportStatus = 'new' | 'returned' | 'reviewed' | 'late';
         </div>
       </div>
 
-      <!-- State 1: Entity Selection Cards -->
-      <div *ngIf="!selectedEntity()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div 
-          *ngFor="let entity of linkedEntities()" 
-          (click)="selectEntity(entity)"
-          class="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:border-capmas-primary/20 transition-all cursor-pointer group relative overflow-hidden"
-        >
-          <div class="absolute -right-6 -top-6 w-24 h-24 bg-gray-50 rounded-full group-hover:bg-capmas-primary/5 transition-colors"></div>
-          
-          <div class="relative z-10">
-            <div class="flex justify-between items-start mb-6">
-              <div [ngClass]="entity.complianceColor" class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18" /></svg>
-              </div>
-              <span class="text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest" [ngClass]="entity.complianceBg">
-                {{ entity.complianceText }}
-              </span>
-            </div>
-
-            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-capmas-primary transition-colors">{{ entity.name }}</h3>
-            <p class="text-xs text-gray-400 font-bold mb-6 line-clamp-1">الجهات التابعة للقطاع التجاري والخدمي</p>
-
-            <div class="grid grid-cols-2 gap-4 pt-6 border-t border-gray-50">
-              <div class="flex flex-col">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">تقارير بانتظار المراجعة</span>
-                <span class="text-lg font-black text-orange-500">{{ entity.pendingCount }}</span>
-              </div>
-              <div class="flex flex-col text-left items-end">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">إجمالي المطلوب</span>
-                <span class="text-lg font-black text-gray-700">{{ entity.totalRequired }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- State 1: Entity Selection Table -->
+      <div *ngIf="!selectedEntity()" class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <table class="w-full text-right border-collapse">
+          <thead>
+            <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50/50 border-b border-gray-100">
+              <th class="px-8 py-5">اسم الجهة التابعة</th>
+              <th class="px-8 py-5 text-center">إجمالي التقارير المطلوبة</th>
+              <th class="px-8 py-5 text-center">بانتظار المراجعة</th>
+              <th class="px-8 py-5 text-left">الإجراء</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr 
+              *ngFor="let entity of linkedEntities()" 
+              class="group hover:bg-gray-50/50 transition-colors cursor-pointer"
+              (click)="selectEntity(entity)"
+            >
+              <td class="px-8 py-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-xl bg-blue-50 text-capmas-primary flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18" /></svg>
+                  </div>
+                  <h4 class="text-sm font-bold text-gray-800 group-hover:text-capmas-primary transition-colors">{{ entity.name }}</h4>
+                </div>
+              </td>
+              <td class="px-8 py-6 text-center">
+                <span class="text-sm font-black text-gray-700">{{ entity.totalRequired }}</span>
+              </td>
+              <td class="px-8 py-6 text-center">
+                <span class="text-sm font-black text-gray-700">{{ entity.pendingCount }}</span>
+              </td>
+              <td class="px-8 py-6 text-left">
+                <button class="px-5 py-2 bg-gray-100 text-gray-600 text-[10px] font-black rounded-xl group-hover:bg-capmas-primary group-hover:text-white transition-all">
+                  عرض التقارير
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- State 2: Reports View with Tabs -->
@@ -220,37 +225,25 @@ export class ReportsManagementComponent implements OnInit {
         id: 'e1', 
         name: 'مصلحة الجمارك المصرية', 
         pendingCount: 12, 
-        totalRequired: 45, 
-        complianceText: 'ملتزم جداً',
-        complianceBg: 'bg-green-100 text-green-700',
-        complianceColor: 'bg-green-50 text-green-500'
+        totalRequired: 45
       },
       { 
         id: 'e2', 
         name: 'الهيئة العامة للرقابة على الصادرات', 
         pendingCount: 8, 
-        totalRequired: 24, 
-        complianceText: 'ملتزم',
-        complianceBg: 'bg-blue-100 text-blue-700',
-        complianceColor: 'bg-blue-50 text-blue-500'
+        totalRequired: 24
       },
       { 
         id: 'e3', 
         name: 'وزارة المالية - قطاع التجارة', 
         pendingCount: 3, 
-        totalRequired: 12, 
-        complianceText: 'غير منتظم',
-        complianceBg: 'bg-orange-100 text-orange-700',
-        complianceColor: 'bg-orange-50 text-orange-500'
+        totalRequired: 12
       },
       { 
         id: 'e4', 
         name: 'الغرفة التجارية بالقاهرة', 
         pendingCount: 0, 
-        totalRequired: 10, 
-        complianceText: 'متأخر',
-        complianceBg: 'bg-red-100 text-red-700',
-        complianceColor: 'bg-red-50 text-red-500'
+        totalRequired: 10
       }
     ];
   });

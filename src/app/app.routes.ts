@@ -28,6 +28,11 @@ export const routes: Routes = [
         loadChildren: () => import('./features/external-entity-admin/external-entity-admin.routes').then(m => m.routes)
       },
       {
+        path: 'decision-maker',
+        canActivate: [roleGuard(['DECISION_MAKER'])],
+        loadChildren: () => import('./features/decision-maker/decision-maker.routes').then(m => m.routes)
+      },
+      {
         path: 'settings',
         children: [
           {
@@ -53,3 +58,5 @@ export const routes: Routes = [
     ]
   }
 ];
+
+// End of file

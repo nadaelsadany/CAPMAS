@@ -39,6 +39,10 @@ export const routes: Routes = [
     loadComponent: () => import('../administration-admin/pages/report-builder.component').then(m => m.ReportBuilderComponent)
   },
   {
+    path: 'roles',
+    loadComponent: () => import('./pages/roles-permissions.component').then(m => m.RolesPermissionsComponent)
+  },
+  {
     path: 'audit-log',
     loadComponent: () => import('./pages/audit-log.component').then(m => m.AuditLogComponent)
   }

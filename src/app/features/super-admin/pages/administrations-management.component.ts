@@ -3,12 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Administration, AdministrationService } from '../../../core/services/administration.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { PermissionDirective } from '../../../core/auth/permission.directive';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-administrations-management',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, PermissionDirective],
   template: `
     <div class="p-8 max-w-7xl mx-auto h-full flex flex-col">
       
@@ -24,10 +26,15 @@ import { Subscription } from 'rxjs';
             <input type="text" [(ngModel)]="searchTerm" placeholder="بحث باسم الإدارة..." class="pr-10 pl-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-capmas-primary outline-none text-sm font-semibold w-64 transition-all focus:w-80 bg-white">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 absolute right-3 top-3 text-gray-400"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
           </div>
-          <button routerLink="/super-admin/administrations/create" class="bg-capmas-primary hover:bg-opacity-90 text-white px-6 py-2 rounded-xl shadow-lg shadow-blue-100 transition-all active:scale-95 font-bold flex items-center gap-2">
+          <button *appHasRole="['SUPER_ADMIN']" routerLink="/super-admin/administrations/create" class="bg-capmas-primary hover:bg-opacity-90 text-white px-6 py-2 rounded-xl shadow-lg shadow-blue-100 transition-all active:scale-95 font-bold flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             إضافة إدارة
           </button>
+          
+          <div *appHasRole="['DECISION_MAKER']" class="bg-amber-50 text-amber-700 px-4 py-2 rounded-xl border border-amber-100 text-xs font-bold flex items-center gap-2">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+             عرض فقط
+          </div>
         </div>
       </div>
 
@@ -46,7 +53,7 @@ import { Subscription } from 'rxjs';
           <div *ngFor="let admin of filteredAdministrations" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col h-full group relative animate-fade-in-up">
             
             <!-- Quick Actions Menu -->
-            <div class="absolute top-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div *appHasRole="['SUPER_ADMIN']" class="absolute top-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
               <button (click)="openEditModal(admin)" class="p-2 bg-white/95 backdrop-blur shadow-sm rounded-lg text-blue-600 hover:bg-blue-50 transition-colors border border-gray-100" title="تعديل">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
               </button>
@@ -76,21 +83,13 @@ import { Subscription } from 'rxjs';
                 <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg text-sm font-bold">{{ admin.linkedEntityIds.length }}</span>
               </div>
               
-              <div class="space-y-2">
-                <div class="flex justify-between text-xs font-bold">
-                  <span class="text-gray-500">نسبة الاعتماد الإجمالية</span>
-                  <span class="text-capmas-primary">75%</span>
-                </div>
-                <div class="w-full bg-gray-50 rounded-full h-2 overflow-hidden border border-gray-100" dir="ltr">
-                  <div class="bg-capmas-primary h-full rounded-full" style="width: 75%"></div>
-                </div>
-              </div>
+
             </div>
 
             <!-- Card Footer -->
             <div class="p-6 bg-gray-50/50 border-t border-gray-100 shrink-0">
-              <button [routerLink]="['/super-admin/administrations', admin.id]" class="w-full bg-white border border-gray-200 hover:border-capmas-primary hover:text-capmas-primary text-gray-700 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 group/btn active:scale-95 shadow-sm">
-                <span>عرض التفاصيل والإدارة</span>
+              <button [routerLink]="[getDetailsLink(admin.id)]" class="w-full bg-white border border-gray-200 hover:border-capmas-primary hover:text-capmas-primary text-gray-700 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 group/btn active:scale-95 shadow-sm">
+                <span>{{ authService.currentUser()?.role === 'DECISION_MAKER' ? 'عرض التفاصيل والتقارير' : 'عرض التفاصيل والإدارة' }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 group-hover/btn:-translate-x-1 transition-transform"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
               </button>
             </div>
@@ -198,8 +197,17 @@ export class AdministrationsManagementComponent implements OnInit, OnDestroy {
   isDeleteModalOpen = false;
   selectedAdmin: Administration | null = null;
   editForm = { name: '', description: '' };
+  
+  constructor(
+    private adminService: AdministrationService,
+    public authService: AuthService
+  ) {}
 
-  constructor(private adminService: AdministrationService) {}
+  getDetailsLink(adminId: string) {
+    const role = this.authService.currentUser()?.role;
+    const base = role === 'DECISION_MAKER' ? '/decision-maker' : '/super-admin';
+    return `${base}/administrations/${adminId}`;
+  }
 
   ngOnInit() {
     this.sub.add(this.adminService.administrations$.subscribe(data => {

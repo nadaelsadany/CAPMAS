@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'ADMINISTRATION_REVIEWER' | 'EXTERNAL_ENTITY_ADMIN';
+export type UserRole = 'SUPER_ADMIN' | 'ADMINISTRATION_ADMIN' | 'ADMINISTRATION_REVIEWER' | 'EXTERNAL_ENTITY_ADMIN' | 'DECISION_MAKER';
 
 export interface User {
   id: string;
